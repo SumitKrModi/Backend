@@ -1,0 +1,39 @@
+main{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    .form-container{
+       height: fit-content;
+       min-width: 20rem;
+        form{
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        padding: 1rem;
+        input{
+            padding-inline: 1.5rem;
+            padding-block: 0.5rem;
+            border-radius: 0.5rem;
+            border: none;
+            outline: none;
+        }
+        button{
+            padding-inline: 1.5rem;
+            padding-block: 0.5rem;
+            border-radius: 0.5rem;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            background-color: #c22020;
+            color: whitesmoke;
+        }
+    }
+        .link{
+            color: #c22020;
+            text-decoration: none;
+            cursor: pointer;
+        }
+    }
+    
+}
