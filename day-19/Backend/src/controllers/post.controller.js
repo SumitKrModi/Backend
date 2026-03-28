@@ -28,6 +28,9 @@ async function createPostController(req,res){
         user:req.user.id
     })
 
+    // Populate user details so the frontend has full user data
+    await post.populate("user");
+
     res.status(201).json({
         message:"Post created successfully",
         post
@@ -94,10 +97,56 @@ async function likePostController(req,res){
         like
     })
 }
+async function unLikePostController(req,res){
+    const username = req.user.username
+    const postId = req.params.postId
+    const post = await postModel.findById(postId)
+    if(!post){
+        return res.status(404).json({
+            message:"post not found"
+        })
+    }
+    const isUserAlreadyLiked = await likeModel.findOne({
+        post:postId,
+        user:username
+    })
+    if(!isUserAlreadyLiked){
+        return res.status(400).json({
+            message:"You have not liked this post"
+        })
+    }
+    const like = await likeModel.findOneAndDelete({
+        _id:isUserAlreadyLiked._id
+    })
+    return res.status(200).json({
+        message:"Post Unliked Successfully",
+        like
+    })
+}
+async function getFeedController(req,res){
+    const user = req.user
+    const posts = await postModel.find().populate("user").lean()
+    const updatedPosts = await Promise.all(posts.map(async (post) => {
+        const isLiked = await likeModel.findOne({
+            post:post._id,
+            user:user.username
+        })
 
+        post.isLiked = !!isLiked
+
+        return post
+    }))
+
+    res.status(200).json({
+        message:"Posts fetched successfully.",
+        posts:updatedPosts
+    })
+}
 module.exports = {
     createPostController,
     getPostController,
     getPostDtailsController,
-    likePostController
+    likePostController,
+    unLikePostController,
+    getFeedController
 }

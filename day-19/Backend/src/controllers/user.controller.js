@@ -35,7 +35,8 @@ async function followUserController(req,res){
 
     const followRecord = await followModel.create({
         follower: followerUsername,
-        followee: followeeUsername
+        followee: followeeUsername,
+        status: "accepted"
     })
     
     res.status(201).json({
@@ -146,10 +147,85 @@ async function rejectFollowRequestController(req,res){
     })
 }
 
+async function getFollowersController(req,res){
+    const username = req.user.username;
+    const follows = await followModel.find({
+        followee: username,
+        status: "accepted"
+    });
+    const followerUsernames = follows.map(f => f.follower);
+    const followers = await userModel.find({
+        username: { $in: followerUsernames }
+    });
+    res.status(200).json({
+        message: "Followers fetched successfully",
+        followers
+    });
+}
+
+async function getFollowingController(req,res){
+    const username = req.user.username;
+    const follows = await followModel.find({
+        follower: username
+    });
+    const followeeUsernames = follows.map(f => f.followee);
+    const following = await userModel.find({
+        username: { $in: followeeUsernames }
+    });
+    res.status(200).json({
+        message: "Following fetched successfully",
+        following
+    });
+}
+
+async function getAllUsersController(req,res){
+    const username = req.user.username;
+    
+    // Find all users I am currently following or have requested to follow
+    const myFollows = await followModel.find({ follower: username });
+    const ignoreUsernames = myFollows.map(f => f.followee);
+    // Add myself to the ignore list
+    ignoreUsernames.push(username);
+
+    const users = await userModel.find({
+        username: { $nin: ignoreUsernames }
+    });
+    
+    res.status(200).json({
+        message: "Users fetched successfully",
+        users
+    });
+}
+
+async function removeFollowerController(req,res){
+    const myUsername = req.user.username
+    const followerUsername = req.params.username
+
+    const followRecord = await followModel.findOneAndDelete({
+        follower: followerUsername,
+        followee: myUsername
+    })
+
+    if(!followRecord){
+        return res.status(404).json({
+            message: "Follower not found"
+        })
+    }
+
+    res.status(200).json({
+        message: `You removed ${followerUsername} from your followers`,
+        follow: followRecord
+    })
+}
+
 module.exports = {
     followUserController,
     unfollowUserController,
     getFollowRequestsController,
     acceptFollowRequestController,
-    rejectFollowRequestController
+    rejectFollowRequestController,
+    getFollowersController,
+    getFollowingController,
+    getAllUsersController,
+    removeFollowerController
 }
